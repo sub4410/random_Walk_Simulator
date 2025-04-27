@@ -6,7 +6,7 @@ function App() {
   const [startSim, setStartSim] = useState(false);
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-r from-purple-400 via-pink-500 to-yellow-500">
+    <div className="relative w-full h-screen bg-black from-purple-400 via-pink-500 to-yellow-500">
       {/* Floating Title and Form */}
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 p-8 z-10">
         <h1 className="text-4xl font-bold mb-6 text-center text-white">🎲 Random Walk Simulator</h1>
