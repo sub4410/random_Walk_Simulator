@@ -7,10 +7,11 @@ export function RandomWalk({ steps = 300, start }) {
   const [pulseNodes, setPulseNodes] = useState({});
   const [positions, setPositions] = useState({});
   const [fullPath, setFullPath] = useState({ nodes: [], links: [] });
+  const [radiusOfGyration, setRadiusOfGyration] = useState(null);
 
   const fgRef = useRef();
-  const [zoomLevel, setZoomLevel] = useState(1); // Start at normal zoom
-  const zoomOutRate = 1; // How much zooms out per step
+  const [zoomLevel, setZoomLevel] = useState(1); 
+  const zoomOutRate = 0.995; 
   const [completed, setCompleted] = useState(false);
 
   // Initialize the random walk
@@ -68,12 +69,35 @@ export function RandomWalk({ steps = 300, start }) {
         setPulseNodes(prev => ({ ...prev, [newNode.id]: Date.now() }));
         setPositions(prev => ({ ...prev, [newNode.id]: { offsetX: 0, offsetY: 0 } }));
 
+        // Recalculate radius of gyration
+        calculateRadiusOfGyration(fullPath.nodes.slice(0, currentStep + 1));
+
         setCurrentStep(current => current + 1);
       }, 50);
 
       return () => clearInterval(interval);
     }
   }, [start, fullPath, currentStep]);
+
+  // Calculate radius of gyration
+  const calculateRadiusOfGyration = (nodes) => {
+    const N = nodes.length;
+    if (N <= 1) return;
+
+    // Calculate center of mass (mean position)
+    const centerX = nodes.reduce((sum, node) => sum + node.x, 0) / N;
+    const centerY = nodes.reduce((sum, node) => sum + node.y, 0) / N;
+
+    // Calculate radius of gyration
+    const sumOfSquares = nodes.reduce((sum, node) => {
+      const dx = node.x - centerX;
+      const dy = node.y - centerY;
+      return sum + dx * dx + dy * dy;
+    }, 0);
+
+    const radiusGyration = Math.sqrt(sumOfSquares / N);
+    setRadiusOfGyration(radiusGyration);
+  };
 
   // Smooth zoom out as new nodes are added
   useEffect(() => {
@@ -106,7 +130,13 @@ export function RandomWalk({ steps = 300, start }) {
   }, []);
 
   return (
+    
     <div className="absolute top-0 left-0 w-full h-full z-0 bg-black overflow-hidden">
+      {radiusOfGyration !== null && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-white text-center font-semibold text-xl z-20">
+          Radius of Gyration: {radiusOfGyration.toFixed(2)} units
+        </div>
+      )}
       <ForceGraph2D
         ref={fgRef}
         graphData={graphData}
@@ -174,6 +204,9 @@ export function RandomWalk({ steps = 300, start }) {
         linkDirectionalParticleWidth={2}
         nodeRelSize={4}
       />
+
+      {/* Display Radius of Gyration */}
+      
     </div>
   );
 }
